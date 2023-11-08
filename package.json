@@ -1,0 +1,22 @@
+{
+  "name": "patch_and_update_document_handler",
+  "version": "1.0.0",
+  "description": "patch and update document handler test",
+  "main": "patch_and_update_document_handler.ts",
+  "directories": {
+    "test": "tests"
+  },
+  "scripts": {
+    "test": "jest --watchAll",
+    "test:coverage": "jest --coverage"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/jest": "^29.5.6",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.2.2"
+  }
+}
