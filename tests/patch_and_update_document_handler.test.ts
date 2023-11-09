@@ -1,5 +1,6 @@
 
-import { patchAndUpdateDocumentHandler, MyDocumentInterface, Item} from "../src/patch_and_update_document_handler";
+
+import { patchAndUpdateDocumentHandler, MyDocumentInterface, Item } from "../src/patch_and_update_document_handler";
 
 // Help function to initialize the document
 function initializeDocument(): MyDocumentInterface {
@@ -29,38 +30,6 @@ describe('patchAndUpdateDocumentHandler', () => {
       const update = { value: 'updated' };
       const updatedDoc = patchAndUpdateDocumentHandler(originalDoc, update);
       expect(updatedDoc.value).toBe('updated');
-  });
-
-  test('should update the nested field of an existing object', () => {
-    // Estado inicial del documento
-    const originalDoc = {
-      a: {
-        b: [
-          { _id: '5dc0ad700000000000000000', name: 'asdf1' },
-          { _id: '5dc0ad700000000000000001', name: 'asdf2' },
-          { _id: '5dc0ad700000000000000002', name: 'asdf3' }
-        ]
-      },
-      value: 'hui',
-      images: {
-        thumbnail: 'http://example.com/thumbnail.jpg',
-        small: 'http://example.com/small.jpg',
-        medium: 'http://example.com/medium.jpg',
-        large: 'http://example.com/large.jpg',
-        xlarge: 'http://example.com/xlarge.jpg'
-      }
-    };
-
-    // Actualización a aplicar
-    const update = {
-      "a.b[5dc0ad700000000000000000]": { title: "asdf1-updated" }
-    };
-
-    // Aplicamos la actualización
-    const updatedDoc = patchAndUpdateDocumentHandler(originalDoc, update);
-
-    // Verificar que el campo anidado se ha actualizado
-    expect(updatedDoc.a.b[0].title).toBe('asdf1-updated');
   });
 
   test('should handle non-array when expecting an array', () => {

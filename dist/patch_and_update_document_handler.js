@@ -84,7 +84,7 @@ const patchAndUpdateDocumentHandler = (document, update) => {
             }
         }
     });
-    console.log(JSON.stringify(document, null, 2));
+    // console.log(JSON.stringify(document, null, 2));
     return document;
 };
 exports.patchAndUpdateDocumentHandler = patchAndUpdateDocumentHandler;
@@ -124,19 +124,19 @@ const update = {
     // "a.c": "hallo",
     // "a.c": "hallo-changed",
     // "value": null,
-    // "a.b": null
+    // "a.b": null,
     // "value": null,
     // "something": "anything",
     // "a.c": "hallo",
     // "x[]": "asdfX",
-    // "v.x[]": "asdfV",
-    // "v.m.l": "asdf-val",
+    //   "v.x[]": "asdfV",
+    //   "v.m.l": "asdf-val",
     // "images": {
-    // 	"thumbnail": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
-    // 	"small": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
-    // 	"medium": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
-    // 	"large": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
-    // 	"xlarge": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg"
-    // }
+    //   	"thumbnail": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
+    //   	"small": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
+    //   	"medium": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
+    //   	"large": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
+    //   	"xlarge": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg"
+    //   }
 };
 (0, exports.patchAndUpdateDocumentHandler)(obj, update);
