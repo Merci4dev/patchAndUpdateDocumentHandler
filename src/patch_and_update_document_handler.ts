@@ -38,93 +38,88 @@ export const patchAndUpdateDocumentHandler = (document: MyDocument, update: MyDo
   // Iterate over all keys in the 'update' object.
   Object.keys(update).forEach((key) => {
     const path = key.split('.');
-    
+
     // Begin at the root of the 'document' and cast it to any type temporarily.
-    let currentPart: any = document; 
+    let currentPart: any = document;
 
     // Iterate through the parts of the path.
     for (let i = 0; i < path.length; i++) {
       const isLast = i === path.length - 1;
       const match = path[i].match(/^(.+?)\[(.*)\]$/);
-      
+
       // If the current path segment does reference an array and index...
       if (match) {
         const arrayName = match[1];
         const itemId = match[2];
-        
-        // If the current part is not an array as expected...
+
+        //Create a new array if it does not exist.
+        if (!currentPart[arrayName] && isLast) {
+          currentPart[arrayName] = [];
+        }
+
+        // If the property is not an array, convert it to an array with the update element.
         if (!Array.isArray(currentPart[arrayName])) {
-          if (isLast && update[key] !== null) {
-            currentPart[arrayName] = [update[key]];
+          if (isLast) {
+            currentPart[arrayName] = [{ _id: itemId, ...update[key] }];
+            return;
+          } else {
+            console.error(`${arrayName} is not an array.`);
             return;
           }
-          console.error(`${arrayName} is not an array.`);
-          return;
         }
-        
-        // If we have an item ID...
-        if (itemId) {
-          // Find the index of the item in the array.
-          const itemIndex = currentPart[arrayName].findIndex((item: any) => item._id === itemId);
 
-          // If the item isn't found and it's not the last path element, push a new item with the ID.
-          if (itemIndex === -1) {
-            if (isLast) {
-              console.error(`Item with _id ${itemId} not found.`);
-              return;
-            }
-            currentPart[arrayName].push({ _id: itemId });
-          }
-          
-          // If we're at the last path element...
-          if (isLast) {
+        // Find the index of the element in the array.
+        let itemIndex = currentPart[arrayName].findIndex((item: any) => item?._id === itemId);
 
-            // If the update is null, remove the item from the array.
-            if (update[key] === null) {
-              currentPart[arrayName].splice(itemIndex, 1);
-            } else {
-              // Otherwise, update the item with the new data.
-              currentPart[arrayName][itemIndex] = { _id: itemId, ...update[key] };
-            }
+        // If it is the last element of the path...
+        if (isLast) {
+          // Delete or update the element from the array.
+          if (update[key] === null) {
+            if (itemIndex !== -1) currentPart[arrayName].splice(itemIndex, 1);
           } else {
-            // Move deeper into the document structure for the next iteration.
-            currentPart = currentPart[arrayName][itemIndex];
+            // Make sure the value is an object with a '_id' field for arrays of objects.
+            let updateValue = typeof update[key] === 'object' ? { _id: itemId, ...update[key] } : update[key];
+
+            if (itemIndex === -1) {
+              currentPart[arrayName].push(updateValue);
+            } else {
+              currentPart[arrayName][itemIndex] = updateValue;
+            }
           }
         } else {
-          // If there's no item ID and we're at the end, push the update into the array.
-          if (isLast) {
-            currentPart[arrayName].push(update[key]);
-          } else {
-            return;
+          if (itemIndex === -1) {
+            currentPart[arrayName].push({ _id: itemId });
+            itemIndex = currentPart[arrayName].length - 1;
           }
+          currentPart = currentPart[arrayName][itemIndex];
         }
       } else {
-          // If the current path segment is not an array reference...
+        // If the current segment is not a reference to an array...
         if (isLast) {
+          // Delete or update the value.
           if (update[key] === null) {
             delete currentPart[path[i]];
           } else {
             currentPart[path[i]] = update[key];
           }
         } else {
-            // If the property doesn't exist, create an empty object for the next iteration.
+          // Prepare the next level of the object.
           if (!currentPart[path[i]]) {
             currentPart[path[i]] = {};
           }
-          // Move deeper into the document structure for the next iteration.
           currentPart = currentPart[path[i]];
         }
       }
     }
   });
 
-  // console.log(JSON.stringify(document, null, 2));
-
+  console.log(JSON.stringify(document, null, 2));
   return document;
-}
+};
 
-// Ejemplo de uso con los objetos definidos.
-const obj: MyDocumentInterface = {
+
+// Test Object Definitions
+const objBase: MyDocumentInterface = {
   a: {
     b: [
       { _id: '5dc0ad700000000000000000', name: 'asdf1' },
@@ -135,15 +130,8 @@ const obj: MyDocumentInterface = {
   value: 'hui'
 };
 
-const objTow: MyDocumentInterface = {
-  a: {
-    b: [
-      { _id: '5dc0ad700000000000000000', name: 'asdf1' },
-      { _id: '5dc0ad700000000000000001', name: 'asdf2' },
-      { _id: '5dc0ad700000000000000002', name: 'asdf3' }
-    ]
-  },
-  value: 'hui',
+const objWithImages: MyDocumentInterface = {
+  ...objBase,
   images: {
         thumbnail: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
         small: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
@@ -153,8 +141,17 @@ const objTow: MyDocumentInterface = {
     }
 };
 
-const update: MyDocumentInterface = {
+const objEmptyB: MyDocumentInterface = {
+  b: []
+};
 
+
+// Update Definitions
+const updateTitleInB: MyDocumentInterface = {
+  'b[5dc0ad700000000000000000]': { title: 'asdf1-update' }
+};
+
+const update: MyDocumentInterface = {
   "a.b[5dc0ad700000000000000000]": { "title": "asdf1-updated" },
 
   // "a.b[5dc0ad700000000000000000].titleValue": "asdf1-updated",
@@ -169,15 +166,15 @@ const update: MyDocumentInterface = {
 
   // "value": null,
 
-  // "a.b": null,
+  // "a.b": null, 
 
   // "value": null,
   // "something": "anything",
   // "a.c": "hallo",
 
   // "x[]": "asdfX",
-  //   "v.x[]": "asdfV",
-  //   "v.m.l": "asdf-val",
+  // "v.x[]": "asdfV",
+  // "v.m.l": "asdf-val",
 
   // "images": {
   //   	"thumbnail": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
@@ -186,9 +183,15 @@ const update: MyDocumentInterface = {
   //   	"large": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg",
   //   	"xlarge": "http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg"
   //   }
-
 };
 
-patchAndUpdateDocumentHandler(obj, update);
+
+// Update Function Executions
+patchAndUpdateDocumentHandler(objBase, update);
+// patchAndUpdateDocumentHandler(objBase, updateTitleInB);
+// patchAndUpdateDocumentHandler(objEmptyB, updateTitleInB);
+
+// Extra
+// patchAndUpdateDocumentHandler(objWithImages, updateTitleInB);
 
 

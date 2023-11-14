@@ -25,14 +25,50 @@ describe('patchAndUpdateDocumentHandler', () => {
     document = initializeDocument();
   });
 
-  test('should update the value of an existing field', () => {
+  it('should update the value of an existing field', () => {
       const originalDoc = { value: 'original' };
       const update = { value: 'updated' };
       const updatedDoc = patchAndUpdateDocumentHandler(originalDoc, update);
       expect(updatedDoc.value).toBe('updated');
   });
 
-  test('should handle non-array when expecting an array', () => {
+  it('add array object on non existing ROOT', () => {
+ 
+    const userUpdate = { 'b[5dc0ad700000000000000000]': { title: 'asdf1-update' } };
+
+    const expectedOutput = {
+    ...document,
+      b: [{ _id: '5dc0ad700000000000000000', title: 'asdf1-update' }],
+      value: 'hui'
+    };
+
+    const result = patchAndUpdateDocumentHandler(document, userUpdate);
+
+    // expect(result).toEqual(expectedOutput);
+
+    //Making Individual checks
+    expect(result.a).toEqual(document.a); // Check the 'a' property
+    expect(result.value).toEqual('hui'); // Check the 'value' property
+    expect(result.b).toEqual([{ _id: '5dc0ad700000000000000000', title: 'asdf1-update' }]); // Check the 'b' property
+  });
+  
+  it('add array object on existing ROOT', () => {
+    const obj: MyDocumentInterface = {
+      b: []
+    };
+
+    const userUpdate = { 'b[5dc0ad700000000000000000]': { title: 'asdf1-update' } };
+
+    const expectedOutput = {
+      b: [{ _id: '5dc0ad700000000000000000', title: 'asdf1-update' }]
+    };
+
+    const result = patchAndUpdateDocumentHandler(obj, userUpdate);
+
+    expect(result).toEqual(expectedOutput);
+  })
+
+  it('should handle non-array when expecting an array', () => {
     const originalDocument = { a: { b: 'not an array' } };
     const update = { 'a.b[123]': { name: 'updated name' } };
   
@@ -40,10 +76,10 @@ describe('patchAndUpdateDocumentHandler', () => {
   
     // Expect that the document has now created an array 'b' with the update included.
     expect(Array.isArray(result.a.b)).toBe(true);
-    expect(result.a.b[0]).toEqual({ name: 'updated name' });
+    expect(result.a.b[0]).toEqual({ _id: '123', name: 'updated name' });
   });
 
-  test('should add a new item when no array index is specified', () => {
+  it('should add a new item when no array index is specified', () => {
     const originalDocument = { a: { b: [] } };
     const update = { 'a.b[]': { _id: '2', name: 'new item' } };
   
@@ -54,7 +90,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(result.a.b[0]).toEqual({ _id: '2', name: 'new item' });
   });
 
-  test('should apply an update to change array value by _id', () => {
+  it('should apply an update to change array value by _id', () => {
     // The update to be applied
     const update = {
       "a.b[5dc0ad700000000000000000].titleValue": "asdf1-updated"
@@ -73,7 +109,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.value).toBe('hui'); // Make sure other properties are not affected
   });
 
-  test('should add a new entry to an array', () => {
+  it('should add a new entry to an array', () => {
     // The update to be applied
     const update = {
       "a.b[]": { "_id": "5dc0ad700000000000000003", "name": "co2" }
@@ -95,7 +131,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.value).toBe('hui'); // Make sure other properties are not affected
   });
 
-  test('should remove an array entry by _id', () => {
+  it('should remove an array entry by _id', () => {
     // Update instruction to remove the array entry
     const update = {
       "a.b[5dc0ad700000000000000001]": null
@@ -124,7 +160,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.value).toBe('hui'); // Verify that the value property is still 'hui'
   });
   
-  test('should add a regular object value', () => {
+  it('should add a regular object value', () => {
     // Update instruction to add the object value
     const update = {
       'a.c': 'hallo'
@@ -153,7 +189,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.value).toBe('hui');
   });
 
-  test('should update a regular object value', () => {
+  it('should update a regular object value', () => {
     // Update instruction to change the object value
     const update = {
       'a.c': 'hallo-changed'
@@ -182,7 +218,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.value).toBe('hui');
   });
 
-  test('should unset a regular object value on root level', () => {
+  it('should unset a regular object value on root level', () => {
     // Update instruction to unset the 'value' property
     const update = {
       'value': null
@@ -205,7 +241,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.a?.b[2]._id).toBe('5dc0ad700000000000000002');
   });
   
-  test('should unset a nested object value', () => {
+  it('should unset a nested object value', () => {
     // Update instruction to unset the 'a.b' property
     const update = {
       'a.b': null
@@ -225,7 +261,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.value).toBe('hui');
   });
 
-  test('should apply multiple update operations at once', () => {
+  it('should apply multiple update operations at once', () => {
     // Update instruction for multiple operations
     const update = {
       "value": null,
@@ -256,7 +292,7 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.a.b[2]._id).toBe('5dc0ad700000000000000002');
   });
 
-  test('should apply array updates and create underlying array or object', () => {
+  it('should apply array updates and create underlying array or object', () => {
     // Update instruction for creating arrays and objects
     const update = {
       "x[]": "asdfX",
@@ -286,39 +322,32 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedDocument.value).toBe('hui');
   });
 
-  test('should apply user image update', () => {
+  it('should apply user image update', () => {
     // Initial document structure for this case
     const obj = {
-      a: {
-        b: [
-          { _id: '5dc0ad700000000000000000', name: 'asdf1' },
-          { _id: '5dc0ad700000000000000001', name: 'asdf2' },
-          { _id: '5dc0ad700000000000000002', name: 'asdf3' }
-        ]
-      },
-      value: 'hui',
+      ...document,
       images: {
-        thumbnail: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
-        small: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
-        medium: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
-        large: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
-        xlarge: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg'
+        thumbnail: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
+        small: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
+        medium: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
+        large: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg',
+        xlarge: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573477587288.jpg'
       }
     };
 
     // Update instruction for updating images
     const update = {
       images: {
-        thumbnail: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
-        small: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
-        medium: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
-        large: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
-        xlarge: 'http://files-test.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg'
+        thumbnail: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
+        small: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
+        medium: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
+        large: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg',
+        xlarge: 'http://files-it.hokify.com/user/pic_5b30ac932c6ba6190bfd7eef_1573480304827.jpg'
       }
     };
 
     // Apply the update to the document
-    const updatedObj = patchAndUpdateDocumentHandler(obj, update);
+    const updatedObj = patchAndUpdateDocumentHandler(document, update);
 
     // Assert that the updatedObj's images are updated correctly
     expect(updatedObj.images.thumbnail).toBe(update.images.thumbnail);
@@ -327,10 +356,35 @@ describe('patchAndUpdateDocumentHandler', () => {
     expect(updatedObj.images.large).toBe(update.images.large);
     expect(updatedObj.images.xlarge).toBe(update.images.xlarge);
 
-    // Assert that 'a.b' array and 'value' remain unchanged
-    expect(updatedObj.a.b.length).toBe(3);
-    expect(updatedObj.a.b).toEqual(obj.a.b); // Ensuring the 'a.b' array is unchanged
+    expect(updatedObj.a?.b.length).toBe(3);
+    expect(updatedObj.a?.b).toEqual(document.a?.b); // Ensuring the 'a.b' array is unchanged
     expect(updatedObj.value).toBe('hui');
+  });
+
+  it('should correctly update title in object with images', () => {
+    const objWithImages = {
+      ...document,
+      images: {
+        thumbnail: 'http://example.com/thumbnail.jpg',
+        small: 'http://example.com/small.jpg',
+        medium: 'http://example.com/medium.jpg',
+        large: 'http://example.com/large.jpg',
+        xlarge: 'http://example.com/xlarge.jpg'
+      }
+    };
+
+    const updateTitleInB: MyDocumentInterface = {
+      'b[5dc0ad700000000000000000]': { title: 'asdf1-update' }
+    };
+
+    const expectedOutput = {
+      ...objWithImages,
+      b: [{ _id: '5dc0ad700000000000000000', title: 'asdf1-update' }]
+    };
+
+    const updatedDocument = patchAndUpdateDocumentHandler(objWithImages, updateTitleInB);
+
+    expect(updatedDocument).toEqual(expectedOutput);
   });
 
 })
